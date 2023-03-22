@@ -17,3 +17,8 @@ variable "service" {
   default = "prft"
   type = string
 }
+variable "virtual_network_name" {
+   description= "Virtual network name"
+   default = "vnet"
+   type=string
+}
