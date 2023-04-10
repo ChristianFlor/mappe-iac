@@ -82,7 +82,7 @@ resource "azurerm_network_security_group" "nsg_back" {
 
 }
 
-resource "azurerm_network_interface_security_group_association" "nsg_association_back" {
+/*sresource "azurerm_network_interface_security_group_association" "nsg_association_back" {
   #network_interface_id      = "${azurerm_linux_virtual_machine_scale_set.zipkin_vmss.network_interface_ids[0]}"
   #network_security_group_id = azurerm_network_security_group.nsg_back.id
   count                      = length("${azurerm_virtual_machine_scale_set.zipkin_vmss.network_interface}")
@@ -92,8 +92,12 @@ resource "azurerm_network_interface_security_group_association" "nsg_association
   depends_on = [
     azurerm_virtual_machine_scale_set.zipkin_vmss,
   ]
-}
+}*/
 
+data "azurerm_image" "users_image" {
+  name                = "dev-prft-eastus-rg-users-api-img"
+  resource_group_name = azurerm_resource_group.resource_group.name 
+}
 
 resource "azurerm_linux_virtual_machine_scale_set" "users_api_vmss" {
     name                = "${local.naming_convention}-users-api-vmss"
@@ -104,7 +108,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "users_api_vmss" {
     admin_username      = "adminuser"
     admin_password      = "#Tomate2022"
     disable_password_authentication = false
-    
+    source_image_id = data.azurerm_image.users_image.id
     network_interface {
         name    = "${local.naming_convention}-users-api-nic"
         primary = true
@@ -116,17 +120,21 @@ resource "azurerm_linux_virtual_machine_scale_set" "users_api_vmss" {
             #private_ip_address_allocation = "Dynamic"
             #public_ip_address_id          = azurerm_public_ip.app_gateway_public_ip.id
         }
+        network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
-    source_image_reference {
+    /*source_image_reference {
         publisher = "Canonical"
         offer     = "UbuntuServer"
         sku       = "16.04-LTS"
         version   = "latest"
-    }
+    }*/
     os_disk {
         storage_account_type = "Standard_LRS"
         caching              = "ReadWrite"
     }
+    depends_on = [
+        azurerm_network_security_group.nsg_back,
+    ]
     /*resource "azurerm_linux_virtual_machine_scale_set_extension" "users_api_extension" {
         name                = "users-api-extension"
         virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.users_api_vmss.id
@@ -141,7 +149,10 @@ resource "azurerm_linux_virtual_machine_scale_set" "users_api_vmss" {
         SETTINGS
     }*/
 }
-
+data "azurerm_image" "auth_image" {
+  name                = "dev-prft-eastus-rg-auth-img"
+  resource_group_name = azurerm_resource_group.resource_group.name 
+}
 resource "azurerm_linux_virtual_machine_scale_set" "auth_api_vmss" {
     name                = "${local.naming_convention}-auth-api-vmss"
     resource_group_name = azurerm_resource_group.resource_group.name
@@ -151,7 +162,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "auth_api_vmss" {
     admin_username      = "adminuser"
     admin_password      = "#Tomate2022"
     disable_password_authentication = false
-    
+    source_image_id = data.azurerm_image.auth_image.id
     network_interface {
         name    = "${local.naming_convention}-auth-api-nic"
         primary = true
@@ -164,17 +175,21 @@ resource "azurerm_linux_virtual_machine_scale_set" "auth_api_vmss" {
             #private_ip_address_allocation = "Dynamic"
             #public_ip_address_id          = azurerm_public_ip.app_gateway_public_ip.id
         }
+        network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
-    source_image_reference {
+    /*source_image_reference {
         publisher = "Canonical"
         offer     = "UbuntuServer"
         sku       = "16.04-LTS"
         version   = "latest"
-    }
+    }*/
     os_disk {
         storage_account_type = "Standard_LRS"
         caching              = "ReadWrite"
     }
+    depends_on = [
+        azurerm_network_security_group.nsg_back,
+    ]
     /*resource "azurerm_linux_virtual_machine_scale_set_extension" "auth_api_extension" {
         name                = "auth-api-extension"
         virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.auth_api_vmss.id
@@ -189,7 +204,10 @@ resource "azurerm_linux_virtual_machine_scale_set" "auth_api_vmss" {
         SETTINGS
     }*/
 }
-
+data "azurerm_image" "log_processor_image" {
+  name                = "dev-prft-eastus-rg-log-processor-img"
+  resource_group_name = azurerm_resource_group.resource_group.name 
+}
 resource "azurerm_linux_virtual_machine_scale_set" "log_processor_vmss" {
     name                = "${local.naming_convention}-log-processor-vmss"
     resource_group_name = azurerm_resource_group.resource_group.name
@@ -199,7 +217,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "log_processor_vmss" {
     admin_username      = "adminuser"
     admin_password      = "#Tomate2022"
     disable_password_authentication = false
-    
+    source_image_id = data.azurerm_image.log_processor_image.id
     network_interface {
         name    = "${local.naming_convention}-auth-api-nic"
         primary = true
@@ -212,17 +230,21 @@ resource "azurerm_linux_virtual_machine_scale_set" "log_processor_vmss" {
             #private_ip_address_allocation = "Dynamic"
             #public_ip_address_id          = azurerm_public_ip.app_gateway_public_ip.id
         }
+        network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
-    source_image_reference {
+    /*source_image_reference {
         publisher = "Canonical"
         offer     = "UbuntuServer"
         sku       = "16.04-LTS"
         version   = "latest"
-    }
+    }*/
     os_disk {
         storage_account_type = "Standard_LRS"
         caching              = "ReadWrite"
     }
+    depends_on = [
+        azurerm_network_security_group.nsg_back,
+    ]
     /*resource "azurerm_linux_virtual_machine_scale_set_extension" "log_processor_extension" {
         name                = "log-processor-extension"
         virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.log_processor_vmss.id
@@ -238,7 +260,10 @@ resource "azurerm_linux_virtual_machine_scale_set" "log_processor_vmss" {
     }*/
 }
 
-
+data "azurerm_image" "todos_image" {
+  name                = "dev-prft-eastus-rg-todos-api-img"
+  resource_group_name = azurerm_resource_group.resource_group.name 
+}
 resource "azurerm_linux_virtual_machine_scale_set" "todos_api_vmss" {
     name                = "${local.naming_convention}-todos-api-vmss"
     resource_group_name = azurerm_resource_group.resource_group.name
@@ -248,7 +273,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "todos_api_vmss" {
     admin_username      = "adminuser"
     admin_password      = "#Tomate2022"
     disable_password_authentication = false
-    
+    source_image_id = data.azurerm_image.todos_image.id
     network_interface {
         name    = "${local.naming_convention}-todos-api-nic"
         primary = true
@@ -261,17 +286,21 @@ resource "azurerm_linux_virtual_machine_scale_set" "todos_api_vmss" {
             #private_ip_address_allocation = "Dynamic"
             #public_ip_address_id          = azurerm_public_ip.app_gateway_public_ip.id
         }
+        network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
-    source_image_reference {
+    /*source_image_reference {
         publisher = "Canonical"
         offer     = "UbuntuServer"
         sku       = "16.04-LTS"
         version   = "latest"
-    }
+    }*/
     os_disk {
         storage_account_type = "Standard_LRS"
         caching              = "ReadWrite"
     }
+    depends_on = [
+        azurerm_network_security_group.nsg_back,
+    ]
     /*resource "azurerm_linux_virtual_machine_scale_set_extension" "todos_api_extension" {
         name                = "todos-api-extension"
         virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.todos_api_vmss.id

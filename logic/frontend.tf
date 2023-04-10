@@ -25,7 +25,10 @@ resource "azurerm_network_interface" "front_nic" {
   }
 }
 
-
+data "azurerm_image" "frontend_image" {
+  name                = "dev-prft-eastus-rg-frontend-img"
+  resource_group_name = azurerm_resource_group.resource_group.name 
+}
 resource "azurerm_linux_virtual_machine" "front_vm" {
   name                = "${local.naming_convention}-front-vm"
   resource_group_name = azurerm_resource_group.resource_group.name
@@ -38,7 +41,7 @@ resource "azurerm_linux_virtual_machine" "front_vm" {
   network_interface_ids = [
     azurerm_network_interface.front_nic.id,
   ]
-
+  source_image_id = data.azurerm_image.frontend_image.id
 #  admin_ssh_key {
  #   username   = "adminuser"
   #  public_key = file("~/.ssh/id_rsa.pub")
@@ -48,13 +51,14 @@ resource "azurerm_linux_virtual_machine" "front_vm" {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
-
+ 
+  /*
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "16.04-LTS"
     version   = "latest"
-  }
+  }*/
 }
 
 resource "azurerm_public_ip" "public_ip_lb" {
