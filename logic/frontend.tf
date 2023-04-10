@@ -27,13 +27,14 @@ resource "azurerm_network_interface" "front_nic" {
 
 
 resource "azurerm_linux_virtual_machine" "front_vm" {
-  name                = "${local.naming_convention}-vm"
+  name                = "${local.naming_convention}-front-vm"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
   size                = "Standard_F2"
   admin_username      = "adminuser"
-  admin_password = "#Tomate2022"
+  admin_password      = "#Tomate2022"
   disable_password_authentication = false
+  availability_set_id = azurerm_availability_set.front_availability_set.id
   network_interface_ids = [
     azurerm_network_interface.front_nic.id,
   ]
@@ -99,7 +100,7 @@ resource "azurerm_network_security_group" "nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "*"
+    source_address_prefix      = "200.3.193.77"
     destination_address_prefix = "*"
   }
 }
