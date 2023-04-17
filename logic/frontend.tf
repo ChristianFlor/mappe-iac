@@ -24,7 +24,7 @@ resource "azurerm_network_interface" "front_nic" {
     #public_ip_address_id          = azurerm_public_ip.front_public_ip.id
   }
 }
-
+/*
 data "azurerm_image" "frontend_image" {
   name                = "dev-prft-eastus-rg-frontend-img"
   resource_group_name = azurerm_resource_group.resource_group.name 
@@ -117,3 +117,4 @@ resource "azurerm_network_interface_security_group_association" "nsg_association
   network_interface_id      = azurerm_network_interface.front_nic.id
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
+*/

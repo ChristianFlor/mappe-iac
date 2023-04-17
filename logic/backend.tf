@@ -6,6 +6,23 @@ resource "azurerm_public_ip" "app_gateway_public_ip" {
 
 }
 locals {
+  # App Gateway
+  frontend_ip_configuration_name_app_gateway = "${local.naming_convention}-frontend_ip_configuration_app_gateway"
+  # App1
+  frontend_port_name_zipkin         = var.frontend_port_name_zipkin
+  backend_address_pool_name_zipkin  = var.backend_address_pool_name_zipkin
+  http_setting_name_zipkin          = var.http_setting_name_zipkin
+  listener_name_zipkin              = var.listener_name_zipkin
+  request_routing_rule_zipkin_name  = var.request_routing_rule_zipkin_name
+  # App2
+  frontend_port_name_users          = var.frontend_port_name_users
+  backend_address_pool_name_users   = var.backend_address_pool_name_users
+  http_setting_name_users           = var.http_setting_name_users
+  listener_name_users               = var.listener_name_users
+  request_routing_rule_users_name   = var.request_routing_rule_users_name
+}
+/*
+locals {
 
   # App Gateway
   frontend_ip_configuration_name_app_gateway = "${local.naming_convention}-frontend_ip_configuration_app_gateway"
@@ -41,7 +58,7 @@ locals {
   listener_name_todos             = "${local.naming_convention}-http-listener_todos_api"
   request_routing_rule_todos_name = "${local.naming_convention}-request_routing_rule_todos_api"
 
-}
+}*/
 data "azurerm_resource_group" "image" {
   name = azurerm_resource_group.resource_group.name
 }
@@ -247,7 +264,6 @@ resource "azurerm_linux_virtual_machine_scale_set" "todos_api_vmss" {
 */
 
 
-
 resource "azurerm_application_gateway" "app_gateway" {
   name                = "${local.naming_convention}-app-gateway"
   resource_group_name = azurerm_resource_group.resource_group.name
@@ -258,10 +274,61 @@ resource "azurerm_application_gateway" "app_gateway" {
     tier     = "Standard"
     capacity = 2
   }
-
+  
   gateway_ip_configuration {
     name      = "my-gateway-ip-configuration"
     subnet_id = azurerm_subnet.subnet_app_gateway.id
+  }
+  frontend_ip_configuration {
+    name                 = local.frontend_ip_configuration_name_app_gateway
+    public_ip_address_id = azurerm_public_ip.app_gateway_public_ip.id
+  }
+  dynamic "frontend_port" {
+    for_each = [local.frontend_port_name_zipkin, local.frontend_port_name_users]
+    content {
+      name = frontend_port.value.name
+      port = frontend_port.value.port
+    }
+  }
+    dynamic "backend_address_pool" {
+        for_each = var.backend_address_pools
+        content {
+            name = backend_address_pool.value.name
+        }
+    
+  }
+  dynamic "backend_http_settings" {
+    for_each = var.backend_http_settings
+    content {
+      name                  = backend_http_settings.value.name
+      cookie_based_affinity = backend_http_settings.value.cookie_based_affinity
+      port                  = backend_http_settings.value.port
+      protocol              = backend_http_settings.value.protocol
+      request_timeout       = backend_http_settings.value.request_timeout
+    }
+    
+  }
+  dynamic "http_listener" {
+    for_each = var.http_listeners
+    content {
+      name                           = http_listener.value.name
+      frontend_ip_configuration_name = http_listener.value.frontend_ip_configuration_name
+      frontend_port_name             = http_listener.value.frontend_port_name
+      protocol                       = http_listener.value.protocol
+    }
+    
+  }
+  dynamic "request_routing_rule" {
+    for_each = var.request_routing_rules
+    content {
+      name                       = request_routing_rule.value.name
+      rule_type                  = request_routing_rule.value.rule_type
+      http_listener_name         = request_routing_rule.value.http_listener_name
+      backend_address_pool_name  = request_routing_rule.value.backend_address_pool_name
+      backend_http_settings_name = request_routing_rule.value.backend_http_settings_name
+    }
+  }
+  /*  
   }
   frontend_ip_configuration {
     name                 = local.frontend_ip_configuration_name_app_gateway
@@ -332,7 +399,7 @@ resource "azurerm_application_gateway" "app_gateway" {
     backend_http_settings_name = local.http_setting_name_users
 
   }
-  
+  /*
   # Configuración del backend address pool y http settings para auth_api (puerto 8081)
   frontend_port {
     name = local.frontend_port_name_auth
@@ -424,5 +491,5 @@ resource "azurerm_application_gateway" "app_gateway" {
         backend_address_pool_name  = local.backend_address_pool_name_todos
         backend_http_settings_name = local.http_setting_name_todos
     }
-   
+   */
 }
