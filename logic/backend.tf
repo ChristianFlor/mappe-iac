@@ -1,11 +1,4 @@
-resource "azurerm_public_ip" "app_gateway_public_ip" {
-  name                = "${local.naming_convention}-app-gateway-public-ip"
-  location            = azurerm_resource_group.resource_group.location
-  resource_group_name = azurerm_resource_group.resource_group.name 
-  allocation_method = "Dynamic"
 
- 
-}
 data "azurerm_resource_group" "image" {
   name                = azurerm_resource_group.resource_group.name 
 }
@@ -33,11 +26,9 @@ resource "azurerm_linux_virtual_machine_scale_set" "zipkin_vmss" {
         ip_configuration {
             name                          = "config_zipkin"
             subnet_id                     = azurerm_subnet.subnet_backend.id
-            #private_ip_address = "10.0.2.16"
-            application_gateway_backend_address_pool_ids = "${azurerm_application_gateway.app_gateway.backend_address_pool[*].id}"
-            #private_ip_address_allocation = "Dynamic"
-            #public_ip_address_id          = azurerm_public_ip.app_gateway_public_ip.id
+            application_gateway_backend_address_pool_ids = "${azurerm_application_gateway.app_gateway.backend_address_pool[0].id}"
         }
+
         network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
 
@@ -48,20 +39,6 @@ resource "azurerm_linux_virtual_machine_scale_set" "zipkin_vmss" {
     depends_on = [
         azurerm_network_security_group.nsg_back,
     ]
-    #source_image_id = data.azurerm_image.image.id
-    /*extension {
-        name                       = "zipkin-extension"
-        publisher                  = "Microsoft.Azure.Extensions"
-        type                       = "CustomScript"
-        type_handler_version       = "2.0"
-        auto_upgrade_minor_version = true
-        settings = <<SETTINGS
-        {
-            "fileUris": ["https://raw.githubusercontent.com/ChristianFlor/mappe-scripting/tree/feature/packer/packer/zipkin.sh"],
-            "commandToExecute": "bash zipkin.sh"
-        }
-        SETTINGS
-    }*/
     
 }
 resource "azurerm_network_security_group" "nsg_back" {
@@ -76,23 +53,12 @@ resource "azurerm_network_security_group" "nsg_back" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "161.18.77.83"
+    source_address_prefix      = "161.18.74.141"
     destination_address_prefix = "*"
   }
 
 }
 
-/*sresource "azurerm_network_interface_security_group_association" "nsg_association_back" {
-  #network_interface_id      = "${azurerm_linux_virtual_machine_scale_set.zipkin_vmss.network_interface_ids[0]}"
-  #network_security_group_id = azurerm_network_security_group.nsg_back.id
-  count                      = length("${azurerm_virtual_machine_scale_set.zipkin_vmss.network_interface}")
-  network_interface_id       = "${azurerm_virtual_machine_scale_set.zipkin_vmss.network_interface[count.index].id}"
-  network_security_group_id  = azurerm_network_security_group.nsg_back.id
-
-  depends_on = [
-    azurerm_virtual_machine_scale_set.zipkin_vmss,
-  ]
-}*/
 
 data "azurerm_image" "users_image" {
   name                = "dev-prft-eastus-rg-users-api-img"
@@ -115,19 +81,13 @@ resource "azurerm_linux_virtual_machine_scale_set" "users_api_vmss" {
         ip_configuration {
             name                          = "config_users_api"
             subnet_id                     = azurerm_subnet.subnet_backend.id
-            #private_ip_address  = "10.0.2.10"
-            application_gateway_backend_address_pool_ids = "${azurerm_application_gateway.app_gateway.backend_address_pool[*].id}"
-            #private_ip_address_allocation = "Dynamic"
-            #public_ip_address_id          = azurerm_public_ip.app_gateway_public_ip.id
+            
+            application_gateway_backend_address_pool_ids = "${azurerm_application_gateway.app_gateway.backend_address_pool[1].id}"
+           
         }
         network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
-    /*source_image_reference {
-        publisher = "Canonical"
-        offer     = "UbuntuServer"
-        sku       = "16.04-LTS"
-        version   = "latest"
-    }*/
+   
     os_disk {
         storage_account_type = "Standard_LRS"
         caching              = "ReadWrite"
@@ -135,20 +95,9 @@ resource "azurerm_linux_virtual_machine_scale_set" "users_api_vmss" {
     depends_on = [
         azurerm_network_security_group.nsg_back,
     ]
-    /*resource "azurerm_linux_virtual_machine_scale_set_extension" "users_api_extension" {
-        name                = "users-api-extension"
-        virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.users_api_vmss.id
-        publisher           = "Microsoft.Azure.Extensions"
-        type                = "CustomScriptForLinux"
-        type_handler_version = "1.8"
-        settings = <<SETTINGS
-        {
-            "fileUris": ["https://raw.githubusercontent.com/ChristianFlor/mappe-scripting/feature/vagrant/vagrant/provision/users-api.sh"],
-            "commandToExecute": "bash users-api.sh"
-        }
-        SETTINGS
-    }*/
+    
 }
+/*
 data "azurerm_image" "auth_image" {
   name                = "dev-prft-eastus-rg-auth-img"
   resource_group_name = azurerm_resource_group.resource_group.name 
@@ -169,20 +118,11 @@ resource "azurerm_linux_virtual_machine_scale_set" "auth_api_vmss" {
         ip_configuration {
             name                          = "config_auth_api"
             subnet_id                     = azurerm_subnet.subnet_backend.id
-           
-            #private_ip_address             = "10.0.2.11"
             application_gateway_backend_address_pool_ids = "${azurerm_application_gateway.app_gateway.backend_address_pool[*].id}"
-            #private_ip_address_allocation = "Dynamic"
-            #public_ip_address_id          = azurerm_public_ip.app_gateway_public_ip.id
         }
         network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
-    /*source_image_reference {
-        publisher = "Canonical"
-        offer     = "UbuntuServer"
-        sku       = "16.04-LTS"
-        version   = "latest"
-    }*/
+    
     os_disk {
         storage_account_type = "Standard_LRS"
         caching              = "ReadWrite"
@@ -190,20 +130,9 @@ resource "azurerm_linux_virtual_machine_scale_set" "auth_api_vmss" {
     depends_on = [
         azurerm_network_security_group.nsg_back,
     ]
-    /*resource "azurerm_linux_virtual_machine_scale_set_extension" "auth_api_extension" {
-        name                = "auth-api-extension"
-        virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.auth_api_vmss.id
-        publisher           = "Microsoft.Azure.Extensions"
-        type                = "CustomScriptForLinux"
-        type_handler_version = "1.8"
-        settings = <<SETTINGS
-        {
-            "fileUris": ["https://raw.githubusercontent.com/ChristianFlor/mappe-scripting/feature/vagrant/vagrant/provision/auth-api.sh"],
-            "commandToExecute": "bash auth-api.sh"
-        }
-        SETTINGS
-    }*/
+    
 }
+/*
 data "azurerm_image" "log_processor_image" {
   name                = "dev-prft-eastus-rg-log-processor-img"
   resource_group_name = azurerm_resource_group.resource_group.name 
@@ -232,12 +161,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "log_processor_vmss" {
         }
         network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
-    /*source_image_reference {
-        publisher = "Canonical"
-        offer     = "UbuntuServer"
-        sku       = "16.04-LTS"
-        version   = "latest"
-    }*/
+   
     os_disk {
         storage_account_type = "Standard_LRS"
         caching              = "ReadWrite"
@@ -245,19 +169,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "log_processor_vmss" {
     depends_on = [
         azurerm_network_security_group.nsg_back,
     ]
-    /*resource "azurerm_linux_virtual_machine_scale_set_extension" "log_processor_extension" {
-        name                = "log-processor-extension"
-        virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.log_processor_vmss.id
-        publisher           = "Microsoft.Azure.Extensions"
-        type                = "CustomScriptForLinux"
-        type_handler_version = "1.8"
-        settings = <<SETTINGS
-        {
-            "fileUris": ["https://raw.githubusercontent.com/ChristianFlor/mappe-scripting/feature/vagrant/vagrant/provision/log-processor.sh"],
-            "commandToExecute": "bash log-processor.sh"
-        }
-        SETTINGS
-    }*/
+    
 }
 
 data "azurerm_image" "todos_image" {
@@ -288,12 +200,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "todos_api_vmss" {
         }
         network_security_group_id = azurerm_network_security_group.nsg_back.id
     }
-    /*source_image_reference {
-        publisher = "Canonical"
-        offer     = "UbuntuServer"
-        sku       = "16.04-LTS"
-        version   = "latest"
-    }*/
+    
     os_disk {
         storage_account_type = "Standard_LRS"
         caching              = "ReadWrite"
@@ -301,23 +208,40 @@ resource "azurerm_linux_virtual_machine_scale_set" "todos_api_vmss" {
     depends_on = [
         azurerm_network_security_group.nsg_back,
     ]
-    /*resource "azurerm_linux_virtual_machine_scale_set_extension" "todos_api_extension" {
-        name                = "todos-api-extension"
-        virtual_machine_scale_set_id = azurerm_linux_virtual_machine_scale_set.todos_api_vmss.id
-        publisher           = "Microsoft.Azure.Extensions"
-        type                = "CustomScriptForLinux"
-        type_handler_version = "1.8"
-        settings = <<SETTINGS
-        {
-            "fileUris": ["https://raw.githubusercontent.com/ChristianFlor/mappe-scripting/feature/vagrant/vagrant/provision/todos-api.sh"],
-            "commandToExecute": "bash todos-api.sh"
-        }
-        SETTINGS
-    }*/
+
 }
 
+*/
 
+resource "azurerm_public_ip" "app_gateway_public_ip" {
+  name                = "${local.naming_convention}-app-gateway-public-ip"
+  location            = azurerm_resource_group.resource_group.location
+  resource_group_name = azurerm_resource_group.resource_group.name 
+  allocation_method = "Static"
+  sku = "Standard" 
+ 
+}
+locals { 
+  # Generic 
+  frontend_port_name             = "${local.naming_convention}-frontend_port"
+  frontend_ip_configuration_name = "${local.naming_convention}-frontend_ip_configuration"
+  listener_name                  = "${local.naming_convention}-http-listener"
+  request_routing_rule1_name     = "${azurerm_virtual_network.vnet.name}-rqrt-1"  
 
+  # App1
+  backend_address_pool_name_zipkin      = "${local.naming_convention}-backend_address_pool_zipkin"
+  http_setting_name_zipkin              = "${local.naming_convention}-backend_http_settings_zipkin"
+  probe_name_app1                = "${local.naming_convention}-be-probe-app1"
+
+  # App2
+  backend_address_pool_name_users      = "${local.naming_convention}-backend_address_pool_users_api"
+  http_setting_name_users              = "${local.naming_convention}-backend_http_settings_users_api"
+  probe_name_app2                    = "${local.naming_convention}-be-probe-app2"
+
+  # Default Redirect on Root Context (/)
+  redirect_configuration_name    = "${local.naming_convention}-rdrcfg"
+
+}
 
 resource "azurerm_application_gateway" "app_gateway" {
   name                = "${local.naming_convention}-app-gateway"
@@ -336,42 +260,175 @@ resource "azurerm_application_gateway" "app_gateway" {
   }
 
   frontend_port {
-    name = "${local.naming_convention}-frontend_port_80"
+    name = local.frontend_port_name
     port = 80
   }
 
   frontend_ip_configuration {
-    name                 = "${local.naming_convention}-frontend_ip_configuration"
+    name                 = local.frontend_ip_configuration_name
     public_ip_address_id = azurerm_public_ip.app_gateway_public_ip.id
   }
-
-  backend_address_pool {
-    name = "${local.naming_convention}-backend_address_pool"
+  http_listener {
+    name                           = local.listener_name
+    frontend_ip_configuration_name = local.frontend_ip_configuration_name
+    frontend_port_name             = local.frontend_port_name
+    protocol                       = "Http"
   }
 
+    
+  # Configuración del backend address pool y http settings para zipkin (puerto 9411)
+    backend_address_pool {
+        name = local.backend_address_pool_name_zipkin
+    }
+    backend_http_settings {
+        name                  = local.http_setting_name_zipkin
+        cookie_based_affinity = "Disabled"
+        #path                  = "/zipkin/"
+        port                  = 9411
+        protocol              = "Http"
+        request_timeout       = 60
+        probe_name = local.probe_name_app1
+    }
   backend_http_settings {
-    name                  = "${local.naming_convention}-backend_http_settings"
+    name                  = "${local.naming_convention}-backend_http_settings_zipkin"
     cookie_based_affinity = "Disabled"
-    path                  = "/back/"
-    port                  = 80
+    #path                  = "/zipkin/"
+    port                  = 9411
     protocol              = "Http"
     request_timeout       = 60
   }
-
-  http_listener {
-    name                           = "${local.naming_convention}-http_listener"
+    http_listener {
+    name                           = "${local.naming_convention}-http-listener-zipkin"
     frontend_ip_configuration_name = "${local.naming_convention}-frontend_ip_configuration"
-    frontend_port_name             = "${local.naming_convention}-frontend_port_80"
+    frontend_port_name             = "${local.naming_convention}-frontend_port"
     protocol                       = "Http"
   }
 
   request_routing_rule {
-    name                       = "${local.naming_convention}-request_routing_rule"
+    name                       = "${local.naming_convention}-request-routing-rule-zipkins"
     rule_type                  = "Basic"
-    http_listener_name         = "${local.naming_convention}-http_listener"
-    backend_address_pool_name  = "${local.naming_convention}-backend_address_pool"
-    backend_http_settings_name = "${local.naming_convention}-backend_http_settings"
+    http_listener_name         = "${local.naming_convention}-http-listener-zipkin"
+    backend_address_pool_name  = "${local.naming_convention}-backend_address_pool_zipkin"
+    backend_http_settings_name = "${local.naming_convention}-backend_http_settings_zipkin"
   }
+    /*
+  # Configuración del backend address pool y http settings para auth_api (puerto 8081)
+  backend_address_pool {
+    name = "${local.naming_convention}-backend_address_pool_auth_api"
+    backend_addresses {
+      fqdn = "${azurerm_linux_virtual_machine_scale_set.auth_api_vmss.name}.${azurerm_resource_group.resource_group.name}.cloudapp.azure.com"
+    }
+  }
+  backend_http_settings {
+    name                  = "${local.naming_convention}-backend_http_settings_auth_api"
+    cookie_based_affinity = "Disabled"
+    path                  = "/auth/"
+    port                  = 8081
+    protocol              = "Http"
+    request_timeout       = 60
+  }
+  http_listener {
+    name                           = "${local.naming_convention}-auth-api-http-listener"
+    frontend_ip_configuration_name = "${local.naming_convention}-frontend_ip_configuration"
+    frontend_port_name             = "${local.naming_convention}-frontend_port_auth_api"
+    protocol                       = "Http"
+  }
+  request_routing_rule {
+    name                       = "${local.naming_convention}-auth-api-request-routing-rule"
+    rule_type                  = "Basic"
+    http_listener_name         = "${local.naming_convention}-auth-api-http-listener"
+    backend_address_pool_name  = "${local.naming_convention}-backend_address_pool_auth_api"
+    backend_http_settings_name = "${local.naming_convention}-backend_http_settings_auth_api"
+  }
+  # Configuración del backend address pool y http settings para log_processor (puerto 8080)
+  backend_address_pool {
+    name = "${local.naming_convention}-backend_address_pool_log_processor"
+    backend_addresses {
+      fqdn = "${azurerm_linux_virtual_machine_scale_set.log_processor_vmss.name}.${azurerm_resource_group.resource_group.name}.cloudapp.azure.com"
+    }
+  }
+
+  backend_http_settings {
+    name                  = "${local.naming_convention}-backend_http_settings_log_processor"
+    cookie_based_affinity = "Disabled"
+    path                  = "/log/"
+    port                  = 8080
+    protocol              = "Http"
+    request_timeout       = 60
+  }
+  http_listener {
+    name                           = "${local.naming_convention}-log-processor-http-listener"
+    frontend_ip_configuration_name = "${local.naming_convention}-frontend_ip_configuration"
+    frontend_port_name             = "${local.naming_convention}-frontend_port_log_processor"
+    protocol                       = "Http"
+  }
+  request_routing_rule {
+    name                       = "${local.naming_convention}-log-processor-request-routing-rule"
+    rule_type                  = "Basic"
+    http_listener_name         = "${local.naming_convention}-log-processor-http-listener"
+    backend_address_pool_name  = "${local.naming_convention}-backend_address_pool_log_processor"
+    backend_http_settings_name = "${local.naming_convention}-backend_http_settings_log_processor"
+  }
+  # Configuración del backend address pool y http settings para todos_api (puerto 8082)
+  backend_address_pool {
+    name = "${local.naming_convention}-backend_address_pool_todos_api"
+    backend_addresses {
+      fqdn = "${azurerm_linux_virtual_machine_scale_set.todos_api_vmss.name}.${azurerm_resource_group.resource_group.name}.cloudapp.azure.com"
+    }
+  }
+
+  backend_http_settings {
+    name                  = "${local.naming_convention}-backend_http_settings_todos_api"
+    cookie_based_affinity = "Disabled"
+    path                  = "/todos/"
+    port                  = 8082
+    protocol              = "Http"
+    request_timeout       = 60
+  }
+  http_listener {
+    name                           = "${local.naming_convention}-todos-api-http-listener"
+    frontend_ip_configuration_name = "${local.naming_convention}-frontend_ip_configuration"
+    frontend_port_name             = "${local.naming_convention}-frontend_port_todos_api"
+    protocol                       = "Http"
+  }
+  request_routing_rule {
+    name                       = "${local.naming_convention}-todos-api-request-routing-rule"
+    rule_type                  = "Basic"
+    http_listener_name         = "${local.naming_convention}-todos-api-http-listener"
+    backend_address_pool_name  = "${local.naming_convention}-backend_address_pool_todos_api"
+    backend_http_settings_name = "${local.naming_convention}-backend_http_settings_todos_api"
+  }
+  # Configuración del backend address pool y http settings para users_api (puerto 8083)
+  backend_address_pool {
+    name = "${local.naming_convention}-backend_address_pool_users_api"
+    backend_addresses {
+      fqdn = "${azurerm_linux_virtual_machine_scale_set.users_api_vmss.name}.${azurerm_resource_group.resource_group.name}.cloudapp.azure.com"
+    }
+  }
+
+  backend_http_settings {
+    name                  = "${local.naming_convention}-backend_http_settings_users_api"
+    cookie_based_affinity = "Disabled"
+    path                  = "/users/"
+    port                  = 8083
+    protocol              = "Http"
+    request_timeout       = 60
+  }
+  http_listener {
+    name                           = "${local.naming_convention}-users-api-http-listener"
+    frontend_ip_configuration_name = "${local.naming_convention}-frontend_ip_configuration"
+    frontend_port_name             = "${local.naming_convention}-frontend_port_users_api"
+    protocol                       = "Http"
+  }
+  request_routing_rule {
+    name                       = "${local.naming_convention}-users-api-request-routing-rule"
+    rule_type                  = "Basic"
+    http_listener_name         = "${local.naming_convention}-users-api-http-listener"
+    backend_address_pool_name  = "${local.naming_convention}-backend_address_pool_users_api"
+    backend_http_settings_name = "${local.naming_convention}-backend_http_settings_users_api"
+  }
+    */
+
 }
 
 

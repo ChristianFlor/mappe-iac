@@ -21,10 +21,10 @@ resource "azurerm_network_interface" "front_nic" {
     name                          = "public"
     subnet_id                     = azurerm_subnet.subnet_fronted.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.front_public_ip.id
+    #public_ip_address_id          = azurerm_public_ip.front_public_ip.id
   }
 }
-
+/*
 data "azurerm_image" "frontend_image" {
   name                = "dev-prft-eastus-rg-frontend-img"
   resource_group_name = azurerm_resource_group.resource_group.name 
@@ -52,18 +52,12 @@ resource "azurerm_linux_virtual_machine" "front_vm" {
     storage_account_type = "Standard_LRS"
   }
  
-  /*
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
-    version   = "latest"
-  }*/
+
 }
 
 resource "azurerm_public_ip" "public_ip_lb" {
   name                = "${local.naming_convention}-lb-public-ip"
-  domain_name_label = "lbipchris"
+  domain_name_label = "lbiprft"
   location            = azurerm_resource_group.resource_group.location
   resource_group_name = azurerm_resource_group.resource_group.name
   allocation_method   = "Dynamic"
@@ -107,8 +101,20 @@ resource "azurerm_network_security_group" "nsg" {
     source_address_prefix      = "200.3.193.77"
     destination_address_prefix = "*"
   }
+  security_rule {
+    name                       = "AllowMyIpAddressCustom80Inbound"
+    priority                   = 1011
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "161.18.74.141/32"
+    destination_address_prefix = "*"
+  }
 }
 resource "azurerm_network_interface_security_group_association" "nsg_association" {
   network_interface_id      = azurerm_network_interface.front_nic.id
   network_security_group_id = azurerm_network_security_group.nsg.id
 }
+*/
